@@ -7,7 +7,8 @@ public class Yuri {
     private static final String HLINE = "____________________________________________________________";
 
     private static final int MAX_TASKS = 100;
-    private static final String[] tasks = new String[MAX_TASKS];
+    //private static final String[] tasks = new String[MAX_TASKS];
+    private static final Task[] tasks = new Task[MAX_TASKS];
     private static int taskCount = 0;
 
 
