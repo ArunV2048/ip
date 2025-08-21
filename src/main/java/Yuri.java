@@ -16,9 +16,10 @@ public class Yuri {
         System.out.println(HLINE);
         System.out.println(" Hello! I'm " + BOT_NAME);
         System.out.println(" What can I do for you?");
-
+        System.out.println(" (Tip: type anything to add; 'list' to see; 'mark n'/'unmark n'; 'bye' to exit.)");
         System.out.println(HLINE);
     }
+
 
     private static void printFarewell() {
         System.out.println(HLINE);
@@ -35,27 +36,74 @@ public class Yuri {
         System.out.println(HLINE);
     }
 
-    private static void addTask(String task) {
+
+
+    private static void addTask(String description) {
         if (taskCount >= MAX_TASKS) {
             printBlock(" Sorry, I can't remember more than " + MAX_TASKS + " tasks.");
             return;
         }
-        tasks[taskCount++] = task;
-        printBlock(" added: " + task);
+        tasks[taskCount++] = new Task(description);
+        printBlock(" added: " + description);
     }
 
     private static void printList() {
         System.out.println(HLINE);
-        if (taskCount > 0) {
-            // (Optional line in samples; including it won’t hurt)
-            // System.out.println(" Here are the tasks in your list:");
-            for (int i = 0; i < taskCount; i++) {
-                System.out.println(" " + (i + 1) + ". " + tasks[i]);
-            }
+        System.out.println(" Here are the tasks in your list:");
+        for (int i = 0; i < taskCount; i++) {
+            // Format matches sample exactly: " 1.[X] read book"
+            System.out.println(" " + (i + 1) + "." + tasks[i]);
         }
         System.out.println(HLINE);
     }
 
+    private static void handleMark(String line) {
+        Integer idx = parseIndex(line, "mark");
+        if (idx == null) {
+            // Keep outputs minimal at Level-3; strict error handling comes later.
+            return;
+        }
+        int zeroBased = idx - 1;
+        if (!isValidIndex(zeroBased)) {
+            return;
+        }
+        tasks[zeroBased].mark();
+        printBlock(
+                " Nice! I've marked this task as done:",
+                "   " + tasks[zeroBased]
+        );
+    }
+
+    private static void handleUnmark(String line) {
+        Integer idx = parseIndex(line, "unmark");
+        if (idx == null) {
+            return;
+        }
+        int zeroBased = idx - 1;
+        if (!isValidIndex(zeroBased)) {
+            return;
+        }
+        tasks[zeroBased].unmark();
+        printBlock(
+                " OK, I've marked this task as not done yet:",
+                "   " + tasks[zeroBased]
+        );
+    }
+
+    private static Integer parseIndex(String line, String cmd) {
+        // Accept forms like "mark 2" or "unmark 10"
+        String[] parts = line.split("\\s+");
+        if (parts.length < 2) return null;
+        try {
+            return Integer.parseInt(parts[1]);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static boolean isValidIndex(int i) {
+        return i >= 0 && i < taskCount;
+    }
 
 
     public static void main(String[] args) {
@@ -63,22 +111,28 @@ public class Yuri {
 
         try (Scanner sc = new Scanner(System.in)) {
             while (true) {
-                if (!sc.hasNextLine()) { // EOF (e.g., Ctrl+D)
+                if (!sc.hasNextLine()) { // EOF
                     printFarewell();
                     break;
                 }
-                String line = sc.nextLine();
+                String line = sc.nextLine().trim();
+
                 if (line.equalsIgnoreCase("bye")) {
                     printFarewell();
                     break;
                 } else if (line.equalsIgnoreCase("list")) {
                     printList();
+                } else if (line.toLowerCase().startsWith("mark ")) {
+                    handleMark(line);
+                } else if (line.toLowerCase().startsWith("unmark ")) {
+                    handleUnmark(line);
                 } else if (!line.isEmpty()) {
                     addTask(line);
                 }
-
+                // empty line => ignore
             }
         }
+
     }
 
     static class Task {
