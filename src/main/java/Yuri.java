@@ -79,4 +79,25 @@ public class Yuri {
             }
         }
     }
+
+    static class Task {
+        private final String description;
+        private boolean isDone;
+
+        Task(String description) {
+            this.description = description;
+            this.isDone = false;
+        }
+
+        void mark() { this.isDone = true; }
+        void unmark() { this.isDone = false; }
+
+        String getStatusIcon() { return isDone ? "X" : " "; }
+
+        @Override
+        public String toString() {
+            return "[" + getStatusIcon() + "] " + description;
+        }
+    }
+
 }
