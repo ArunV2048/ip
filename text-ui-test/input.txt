@@ -12,3 +12,5 @@ mark two
 mark 999
 blah
 bye
+delete 3
+list

@@ -51,7 +51,7 @@ ____________________________________________________________
  OOPS!!! That task number doesn't exist yet. Try 'list' to see valid numbers.
 ____________________________________________________________
 ____________________________________________________________
- OOPS!!! I don’t recognize that command. Try: todo, deadline, event, list, mark, unmark, bye.
+ OOPS!!! I don’t recognize that command. Try: todo, deadline, event, list, mark, unmark, delete, bye.
 ____________________________________________________________
 ____________________________________________________________
  Bye. Hope to see you again soon!
