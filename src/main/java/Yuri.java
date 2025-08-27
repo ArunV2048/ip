@@ -1,3 +1,6 @@
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +59,13 @@ public class Yuri {
         System.out.println(" Got it. I've added this task:");
         System.out.println("   " + task);
         System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
+
+        try {
+            new Yuri().new Storage("data/duke.txt").save(new ArrayList<>(tasks));
+        } catch (IOException e) {
+            printError("Failed to save: " + e.getMessage());
+        }
+
         System.out.println(HLINE);
     }
 
@@ -202,6 +212,14 @@ public class Yuri {
     //MAIN
 
     public static void main(String[] args) {
+
+        try {
+            ArrayList<Task> loaded = new Yuri().new Storage("data/duke.txt").load();
+            tasks.addAll(loaded);
+        } catch (IOException e) {
+            printError("Error loading save file: " + e.getMessage());
+        }
+
         printGreeting();
 
         try (Scanner sc = new Scanner(System.in)) {
@@ -267,17 +285,29 @@ public class Yuri {
         public String toString() {
             return "[" + getStatusIcon() + "] " + description;
         }
+
+        public String toSaveFormat() {
+            // Example for a Todo task
+            // You can customize your encoding (e.g. T | 1 | read book)
+            return "T | " + (isDone ? "1" : "0") + " | " + description;
+        }
     }
 
     static class Todo extends Task {
         Todo(String description) { super(description); }
         @Override public String toString() { return "[T]" + super.toString(); }
+        @Override public String toSaveFormat() {
+            return "T | " + (isDone ? "1" : "0") + " | " + description;
+        }
     }
 
     static class Deadline extends Task {
         private final String by;
         Deadline(String description, String by) { super(description); this.by = by; }
         @Override public String toString() { return "[D]" + super.toString() + " (by: " + by + ")"; }
+        @Override public String toSaveFormat() {
+            return "D | " + (isDone ? "1" : "0") + " | " + description + " | " + by;
+        }
     }
 
     static class Event extends Task {
@@ -288,11 +318,14 @@ public class Yuri {
             this.from = from;
             this.to = to;
         }
-        @Override
-        public String toString() {
+        @Override public String toString() {
             return "[E]" + super.toString() + " (from: " + from + " to: " + to + ")";
         }
+        @Override public String toSaveFormat() {
+            return "E | " + (isDone ? "1" : "0") + " | " + description + " | " + from + " | " + to;
+        }
     }
+
 
     //CUSTOM EXCEPTION
 
@@ -301,4 +334,74 @@ public class Yuri {
             super(message);
         }
     }
+
+    public class Storage {
+        private final String filePath;
+
+        public Storage(String filePath) {
+            this.filePath = filePath;
+        }
+
+        public ArrayList<Task> load() throws IOException {
+            ArrayList<Task> tasks = new ArrayList<>();
+            File file = new File(filePath);
+
+            if (!file.exists()) {
+                file.getParentFile().mkdirs();
+                file.createNewFile();
+                return tasks; // empty list
+            }
+
+            Scanner sc = new Scanner(file);
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine();
+                Task task = parseTask(line); // <-- you’ll implement this
+                tasks.add(task);
+            }
+            sc.close();
+            return tasks;
+        }
+
+        public void save(ArrayList<Task> tasks) throws IOException {
+            FileWriter fw = new FileWriter(filePath);
+            for (Task task : tasks) {
+                fw.write(task.toSaveFormat() + System.lineSeparator());
+            }
+            fw.close();
+        }
+
+        private Task parseTask(String line) {
+            // Expected formats:
+            // T | 0/1 | description
+            // D | 0/1 | description | by
+            // E | 0/1 | description | from | to
+            String[] parts = line.split("\\s*\\|\\s*");
+            if (parts.length < 3) return null; // or throw
+
+            String type = parts[0];
+            boolean done = "1".equals(parts[1]);
+            Task t;
+
+            switch (type) {
+                case "T":
+                    t = new Todo(parts[2]);
+                    break;
+                case "D":
+                    if (parts.length < 4) return null;
+                    t = new Deadline(parts[2], parts[3]);
+                    break;
+                case "E":
+                    if (parts.length < 5) return null;
+                    t = new Event(parts[2], parts[3], parts[4]);
+                    break;
+                default:
+                    return null;
+            }
+            if (done) t.mark();
+            return t;
+        }
+
+    }
 }
+
+
