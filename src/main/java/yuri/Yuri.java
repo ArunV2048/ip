@@ -1,9 +1,7 @@
-import java.io.File;
-import java.io.FileWriter;
+package yuri;
+
 import java.io.IOException;
 import java.util.Scanner;
-import java.util.ArrayList;
-import java.util.List;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -56,12 +54,12 @@ public class Yuri {
 //            ui.showError("Error loading save file: " + e.getMessage());
 //        }
 //
-//        new Yuri().ui.showGreeting();
+//        new yuri.Yuri().ui.showGreeting();
 //
 //        try (Scanner sc = new Scanner(System.in)) {
 //            while (true) {
 //                if (!sc.hasNextLine()) {
-//                    new Yuri().ui.showFarewell();
+//                    new yuri.Yuri().ui.showFarewell();
 //                    break;
 //                }
 //                String line = sc.nextLine().trim();
@@ -72,12 +70,12 @@ public class Yuri {
 //                        if (line.strip().contains(" ")) {
 //                            throw new YuriException("Just type 'list' with no extra words.");
 //                        }
-//                        new Yuri().ui.showList(tasks);
+//                        new yuri.Yuri().ui.showList(tasks);
 //                    } else if (line.toLowerCase().startsWith("bye")) {
 //                        if (line.strip().contains(" ")) {
 //                            throw new YuriException("Just type 'bye' with no extra words.");
 //                        }
-//                        new Yuri().ui.showFarewell();
+//                        new yuri.Yuri().ui.showFarewell();
 //                        break;
 //                    } else if (parser.startsWithWord(line, "mark")) {
 //                        handleMark(line);

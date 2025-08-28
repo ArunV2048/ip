@@ -1,7 +1,9 @@
+package yuri;
+
 import java.util.List;
 
 public class Ui {
-    private static final String BOT_NAME = "Yuri";
+    private static final String BOT_NAME = "yuri.Yuri";
     private static final String HLINE = "____________________________________________________________";
 
     private void line() { System.out.println(HLINE); }

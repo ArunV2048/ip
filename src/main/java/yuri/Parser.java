@@ -1,3 +1,5 @@
+package yuri;
+
 public class Parser {
     public boolean startsWithWord(String line, String word) {
         String lw = line.toLowerCase();
