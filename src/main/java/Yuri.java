@@ -9,35 +9,28 @@ import java.time.format.DateTimeFormatter;
 
 public class Yuri {
 
-
-    private static final List<Task> tasks = new ArrayList<>();
     private static final Parser parser = new Parser();
+    private final TaskList tasks;;
 
 
     private static final int MAX_TASKS = 100;
-    //private static final String[] tasks = new String[MAX_TASKS];
     //private static final Task[] tasks = new Task[MAX_TASKS];
     private static int taskCount = 0;
 
-    //UI HELPERS
+
     private static final Ui ui = new Ui();
     // ADD/LIST/MARK/UNMARK
     private static final Storage storage = new Storage("data/duke.txt");
 
-
-    private static void addTask(Task task) throws YuriException {
-        if (task == null || task.description == null || task.description.trim().isEmpty()) {
-            throw new YuriException("Task description cannot be empty.");
-        }
-        tasks.add(task);
-
+    public Yuri() {
+        TaskList loaded;
         try {
-            storage.save(tasks);
-        } catch (java.io.IOException e) {
-            ui.showError("Failed to save: " + e.getMessage());
+            loaded = new TaskList(storage.load()); // loads from file
+        } catch (IOException e) {
+            ui.showError("Error loading save file: " + e.getMessage());
+            loaded = new TaskList(); // empty if load fails
         }
-
-        new Yuri().ui.showAdded(task, tasks.size());
+        this.tasks = loaded;
     }
 
     // (Kept for backward compatibility if you type free text; now treated as Todo)
@@ -47,123 +40,158 @@ public class Yuri {
 
 
 
-    private static void handleMark(String line) throws YuriException {
-        int idx = parser.parseIndexOrThrow(line, "mark");
-        int i = idx - 1;
-        requireValidIndex(i);
-        tasks.get(i).mark();
-        new Yuri().ui.showMark(tasks.get(i));
-    }
-
-
-    private static void handleUnmark(String line) throws YuriException {
-        int idx = parser.parseIndexOrThrow(line, "unmark");
-        int i = idx - 1;
-        requireValidIndex(i);
-        tasks.get(i).unmark();
-        new Yuri().ui.showUnmark(tasks.get(i));
-    }
-
-    private static void handleDelete(String line) throws YuriException {
-        int idx = parser.parseIndexOrThrow(line, "delete");
-        int i = idx - 1;
-        requireValidIndex(i);
-        Task removed = tasks.remove(i);
-        new Yuri().ui.showDeleted(removed, tasks.size());
-    }
-
-
     //LEVEL 4 COMMANDS
 
-    private static void handleTodo(String line) throws YuriException {
-        String desc = parser.sliceAfter(line, "todo");
-        if (desc.isBlank()) throw new YuriException("The description of a todo cannot be empty.");
-        addTask(new Todo(desc));
-    }
-
-    private static void handleDeadline(String line) throws YuriException {
-        String payload = parser.sliceAfter(line, "deadline");
-        String[] parts = parser.splitOnceOrThrow(payload, "/by",
-                "Deadline needs '/by <when>'. Example: deadline return book /by Sunday");
-        String desc = parts[0].trim();
-        String by = parts[1].trim();
-        if (desc.isEmpty()) throw new YuriException("Deadline description cannot be empty.");
-        if (by.isEmpty()) throw new YuriException("Please specify when the deadline is due after '/by'.");
-        addTask(new Deadline(desc, by));
-    }
-
-
-    private static void handleEvent(String line) throws YuriException {
-        String payload = parser.sliceAfter(line, "event");
-        String[] pFrom = parser.splitOnceOrThrow(payload, "/from",
-                "Event needs '/from <start>'. Example: event meeting /from Mon 2pm /to 3pm");
-        String desc = pFrom[0].trim();
-        String rest = pFrom[1].trim();
-        String[] pTo = parser.splitOnceOrThrow(rest, "/to",
-                "Event needs '/to <end>'. Example: event meeting /from Mon 2pm /to 3pm");
-        String from = pTo[0].trim();
-        String to = pTo[1].trim();
-        if (desc.isEmpty()) throw new YuriException("Event description cannot be empty.");
-        if (from.isEmpty()) throw new YuriException("Please specify the event start after '/from'.");
-        if (to.isEmpty()) throw new YuriException("Please specify the event end after '/to'.");
-        addTask(new Event(desc, from, to));
-    }
 
     //HELPERS
 
-
-    private static void requireValidIndex(int i) throws YuriException {
-        if (i < 0 || i >= tasks.size()) {
-            throw new YuriException("That task number doesn't exist yet. Try 'list' to see valid numbers.");
-        }
-    }
-
     //MAIN
 
+//    public static void main(String[] args) {
+//
+//        try {
+//            ArrayList<Task> loaded = storage.load();
+//            tasks.addAll(loaded);
+//        } catch (IOException e) {
+//            ui.showError("Error loading save file: " + e.getMessage());
+//        }
+//
+//        new Yuri().ui.showGreeting();
+//
+//        try (Scanner sc = new Scanner(System.in)) {
+//            while (true) {
+//                if (!sc.hasNextLine()) {
+//                    new Yuri().ui.showFarewell();
+//                    break;
+//                }
+//                String line = sc.nextLine().trim();
+//                if (line.isEmpty()) continue;
+//
+//                try {
+//                    if (line.toLowerCase().startsWith("list")) {
+//                        if (line.strip().contains(" ")) {
+//                            throw new YuriException("Just type 'list' with no extra words.");
+//                        }
+//                        new Yuri().ui.showList(tasks);
+//                    } else if (line.toLowerCase().startsWith("bye")) {
+//                        if (line.strip().contains(" ")) {
+//                            throw new YuriException("Just type 'bye' with no extra words.");
+//                        }
+//                        new Yuri().ui.showFarewell();
+//                        break;
+//                    } else if (parser.startsWithWord(line, "mark")) {
+//                        handleMark(line);
+//                    } else if (parser.startsWithWord(line, "unmark")) {
+//                        handleUnmark(line);
+//                    } else if (parser.startsWithWord(line, "delete")) {
+//                        handleDelete(line);
+//                    } else if (parser.startsWithWord(line, "todo")) {
+//                        handleTodo(line);
+//                    } else if (parser.startsWithWord(line, "deadline")) {
+//                        handleDeadline(line);
+//                    } else if (parser.startsWithWord(line, "event")) {
+//                        handleEvent(line);
+//                    } else {
+//                        throw new YuriException("I don’t recognize that command. Try: todo, deadline, event, list, mark, unmark, delete, bye.");
+//                    }
+//                } catch (YuriException e) {
+//                    ui.showError(e.getMessage());
+//                }
+//            }
+//        }
+//    }
+
     public static void main(String[] args) {
+        new Yuri().run();
+    }
 
-        try {
-            ArrayList<Task> loaded = storage.load();
-            tasks.addAll(loaded);
-        } catch (IOException e) {
-            ui.showError("Error loading save file: " + e.getMessage());
-        }
 
-        new Yuri().ui.showGreeting();
-
+    public void run() {
+        ui.showGreeting();
         try (Scanner sc = new Scanner(System.in)) {
             while (true) {
                 if (!sc.hasNextLine()) {
-                    new Yuri().ui.showFarewell();
+                    ui.showFarewell();
                     break;
                 }
                 String line = sc.nextLine().trim();
                 if (line.isEmpty()) continue;
 
                 try {
-                    if (line.toLowerCase().startsWith("list")) {
-                        if (line.strip().contains(" ")) {
+                    if (parser.startsWithWord(line, "list")) {
+                        if (line.strip().contains(" "))
                             throw new YuriException("Just type 'list' with no extra words.");
-                        }
-                        new Yuri().ui.showList(tasks);
-                    } else if (line.toLowerCase().startsWith("bye")) {
-                        if (line.strip().contains(" ")) {
+                        ui.showList(tasks.all());
+
+                    } else if (parser.startsWithWord(line, "bye")) {
+                        if (line.strip().contains(" "))
                             throw new YuriException("Just type 'bye' with no extra words.");
-                        }
-                        new Yuri().ui.showFarewell();
+                        ui.showFarewell();
                         break;
+
                     } else if (parser.startsWithWord(line, "mark")) {
-                        handleMark(line);
+                        int idx = parser.parseIndexOrThrow(line, "mark") - 1;
+                        requireValidIndex(idx);
+                        tasks.mark(idx);
+                        ui.showMark(tasks.get(idx));
+                        persist();
+
                     } else if (parser.startsWithWord(line, "unmark")) {
-                        handleUnmark(line);
+                        int idx = parser.parseIndexOrThrow(line, "unmark") - 1;
+                        requireValidIndex(idx);
+                        tasks.unmark(idx);
+                        ui.showUnmark(tasks.get(idx));
+                        persist();
+
                     } else if (parser.startsWithWord(line, "delete")) {
-                        handleDelete(line);
+                        int idx = parser.parseIndexOrThrow(line, "delete") - 1;
+                        requireValidIndex(idx);
+                        Yuri.Task removed = tasks.remove(idx);
+                        ui.showDeleted(removed, tasks.size());
+                        persist();
+
                     } else if (parser.startsWithWord(line, "todo")) {
-                        handleTodo(line);
+                        String desc = parser.sliceAfter(line, "todo");
+                        if (desc.isBlank())
+                            throw new YuriException("The description of a todo cannot be empty.");
+                        Yuri.Task t = new Todo(desc);
+                        tasks.add(t);
+                        ui.showAdded(t, tasks.size());
+                        persist();
+
                     } else if (parser.startsWithWord(line, "deadline")) {
-                        handleDeadline(line);
+                        String payload = parser.sliceAfter(line, "deadline");
+                        String[] parts = parser.splitOnceOrThrow(payload, "/by",
+                                "Deadline needs '/by <when>'. Example: deadline return book /by 2019-12-02");
+                        String desc = parts[0].trim();
+                        String by = parts[1].trim();
+                        if (desc.isEmpty())
+                            throw new YuriException("Deadline description cannot be empty.");
+                        if (by.isEmpty())
+                            throw new YuriException("Please specify when the deadline is due after '/by'.");
+                        Yuri.Task t = new Deadline(desc, by);
+                        tasks.add(t);
+                        ui.showAdded(t, tasks.size());
+                        persist();
+
                     } else if (parser.startsWithWord(line, "event")) {
-                        handleEvent(line);
+                        String payload = parser.sliceAfter(line, "event");
+                        String[] pFrom = parser.splitOnceOrThrow(payload, "/from",
+                                "Event needs '/from <start>'. Example: event meeting /from 2019-12-10 /to 2019-12-12");
+                        String desc = pFrom[0].trim();
+                        String rest = pFrom[1].trim();
+                        String[] pTo = parser.splitOnceOrThrow(rest, "/to",
+                                "Event needs '/to <end>'. Example: event meeting /from 2019-12-10 /to 2019-12-12");
+                        String from = pTo[0].trim();
+                        String to = pTo[1].trim();
+                        if (desc.isEmpty()) throw new YuriException("Event description cannot be empty.");
+                        if (from.isEmpty()) throw new YuriException("Please specify the event start after '/from'.");
+                        if (to.isEmpty()) throw new YuriException("Please specify the event end after '/to'.");
+                        Yuri.Task t = new Event(desc, from, to);
+                        tasks.add(t);
+                        ui.showAdded(t, tasks.size());
+                        persist();
+
                     } else {
                         throw new YuriException("I don’t recognize that command. Try: todo, deadline, event, list, mark, unmark, delete, bye.");
                     }
@@ -173,6 +201,24 @@ public class Yuri {
             }
         }
     }
+
+    private void requireValidIndex(int i) throws YuriException {
+        if (i < 0 || i >= tasks.size()) {
+            throw new YuriException("That task number doesn't exist yet. Try 'list' to see valid numbers.");
+        }
+    }
+
+    private void persist() {
+        try {
+            storage.save(tasks.all());
+        } catch (IOException e) {
+            ui.showError("Failed to save: " + e.getMessage());
+        }
+    }
+
+
+
+
 
     //TASK + SUBCLASSES (INNER)
 
