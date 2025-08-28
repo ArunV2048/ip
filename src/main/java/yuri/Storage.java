@@ -7,62 +7,87 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-/** Handles persistence of tasks to and from the save file on disk.
- *  The file format is the simple pipe-separated format produced by each task's {@code toSaveFormat()}.
+/**
+ * Handles persistence of tasks to and from the save file on disk.
+ * The file format is the simple pipe-separated format produced by each task's {@code toSaveFormat()}.
  */
 public class Storage {
+
     private final String filePath;
 
-    /** Creates a {@code Storage} that reads/writes to the given path.
-     *  @param filePath path of the save file, e.g. {@code data/duke.txt}
+    /**
+     * Creates a {@code Storage} that reads/writes to the given path.
+     *
+     * @param filePath path of the save file, e.g. {@code data/duke.txt}
      */
     public Storage(String filePath) {
         this.filePath = filePath;
     }
 
-    /** Loads tasks from disk.
-     *  <p>If the file does not exist, it is created and an empty list is returned.</p>
-     *  @return list of tasks loaded from disk (possibly empty)
-     *  @throws java.io.IOException if an I/O error occurs while creating/reading the file
+    /**
+     * Loads tasks from disk.
+     * <p>If the file does not exist, it is created and an empty list is returned.</p>
+     *
+     * @return list of tasks loaded from disk (possibly empty)
+     * @throws IOException if an I/O error occurs while creating/reading the file
      */
     public ArrayList<Yuri.Task> load() throws IOException {
         ArrayList<Yuri.Task> tasks = new ArrayList<>();
         File file = new File(filePath);
 
         if (!file.exists()) {
-            if (file.getParentFile() != null) file.getParentFile().mkdirs();
+            File parent = file.getParentFile();
+            if (parent != null) {
+                parent.mkdirs();
+            }
             file.createNewFile();
             return tasks;
         }
 
         try (Scanner sc = new Scanner(file)) {
             while (sc.hasNextLine()) {
-                Yuri.Task t = parseTask(sc.nextLine());
-                if (t != null) tasks.add(t);
+                String line = sc.nextLine();
+                Yuri.Task task = parseTask(line);
+                if (task != null) {
+                    tasks.add(task);
+                }
             }
         }
         return tasks;
     }
 
-    /** Saves the given tasks to disk, overwriting any existing content.
-     *  @param tasks tasks to persist
-     *  @throws java.io.IOException if an I/O error occurs while writing
+    /**
+     * Saves the given tasks to disk, overwriting any existing content.
+     *
+     * @param tasks tasks to persist
+     * @throws IOException if an I/O error occurs while writing
      */
     public void save(List<Yuri.Task> tasks) throws IOException {
         try (FileWriter fw = new FileWriter(filePath)) {
-            for (Yuri.Task t : tasks) {
-                fw.write(t.toSaveFormat());
+            for (Yuri.Task task : tasks) {
+                fw.write(task.toSaveFormat());
                 fw.write(System.lineSeparator());
             }
         }
     }
 
-    // Parse your on-disk format
+    /* =========================
+       Internal: parse a task line
+       ========================= */
+
     private Yuri.Task parseTask(String line) {
+        // Expected formats:
+        // T | 0/1 | description
+        // D | 0/1 | description | yyyy-MM-dd
+        // E | 0/1 | description | yyyy-MM-dd | yyyy-MM-dd
         String[] p = line.split("\\s*\\|\\s*");
-        if (p.length < 3) return null;
+        if (p.length < 3) {
+            return null;
+        }
+
         String type = p[0];
         boolean done = "1".equals(p[1]);
+
         Yuri.Task t;
         switch (type) {
             case "T":
@@ -77,8 +102,10 @@ public class Storage {
             default:
                 return null;
         }
-        if (done) t.mark();
+
+        if (done) {
+            t.mark();
+        }
         return t;
     }
 }
-

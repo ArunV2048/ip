@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
-
+    id 'checkstyle'
 }
 
 application {
@@ -24,4 +24,15 @@ test {
 shadowJar {
     // nice, predictable name for your release upload
     archiveFileName = 'Yuri.jar'
+}
+
+checkstyle {
+    toolVersion = '10.20.1'
+}
+
+tasks.withType(Checkstyle).configureEach {
+    reports {
+        html.required = true
+        xml.required = false
+    }
 }

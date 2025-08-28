@@ -2,14 +2,18 @@ package yuri;
 
 import java.util.List;
 
-/** Handles all user-facing output for the CLI (greeting, lists, confirmations, errors).
- *  Centralizes formatting so core logic remains clean.
+/**
+ * Handles all user-facing output for the CLI: greeting, lists, confirmations, and errors.
+ * Centralizes formatting so core logic remains clean.
  */
 public class Ui {
+
     private static final String BOT_NAME = "yuri.Yuri";
     private static final String HLINE = "____________________________________________________________";
 
-    private void line() { System.out.println(HLINE); }
+    private void line() {
+        System.out.println(HLINE);
+    }
 
     /** Prints the greeting header shown at program start. */
     public void showGreeting() {
@@ -28,8 +32,10 @@ public class Ui {
         line();
     }
 
-    /** Prints a formatted error message in a consistent style.
-     *  @param message error details to show
+    /**
+     * Prints a formatted error message in a consistent style.
+     *
+     * @param message error details to show
      */
     public void showError(String message) {
         line();
@@ -37,9 +43,11 @@ public class Ui {
         line();
     }
 
-    /** Prints a confirmation that a task was added, and shows the new list size.
-     *  @param task the task that was added
-     *  @param newSize resulting size of the task list
+    /**
+     * Prints a confirmation that a task was added, and shows the new list size.
+     *
+     * @param task    the task that was added
+     * @param newSize resulting size of the task list
      */
     public void showAdded(Yuri.Task task, int newSize) {
         line();
@@ -49,17 +57,24 @@ public class Ui {
         line();
     }
 
-
-    public void showDeleted(Yuri.Task removed, int newSize) {
+    /**
+     * Prints a confirmation that a task was deleted, and shows the new list size.
+     *
+     * @param task    the task that was removed
+     * @param newSize resulting size of the task list
+     */
+    public void showDeleted(Yuri.Task task, int newSize) {
         line();
         System.out.println(" Noted. I've removed this task:");
-        System.out.println("   " + removed);
+        System.out.println("   " + task);
         System.out.println(" Now you have " + newSize + " tasks in the list.");
         line();
     }
 
-    /** Prints a confirmation that a task was marked done.
-     *  @param t the task that was marked
+    /**
+     * Prints a confirmation that a task was marked done.
+     *
+     * @param t the task that was marked
      */
     public void showMark(Yuri.Task t) {
         line();
@@ -68,8 +83,10 @@ public class Ui {
         line();
     }
 
-    /** Prints a confirmation that a task was marked not done.
-     *  @param t the task that was unmarked
+    /**
+     * Prints a confirmation that a task was marked not done.
+     *
+     * @param t the task that was unmarked
      */
     public void showUnmark(Yuri.Task t) {
         line();
@@ -78,8 +95,10 @@ public class Ui {
         line();
     }
 
-    /** Prints the current list of tasks with 1-based numbering.
-     *  @param tasks list view of tasks to display
+    /**
+     * Prints the current list of tasks with 1-based numbering.
+     *
+     * @param tasks list view of tasks to display
      */
     public void showList(List<Yuri.Task> tasks) {
         line();
