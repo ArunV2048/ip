@@ -70,6 +70,14 @@ public class Yuri {
                         ui.showFarewell();
                         break;
 
+                    } else if (parser.startsWithWord(line, "find")) {
+                        String keyword = parser.sliceAfter(line, "find");
+                        if (keyword.isBlank()) {
+                            throw new YuriException("Please provide a keyword. Example: find book");
+                        }
+                        java.util.List<Task> matches = tasks.find(keyword);
+                        ui.showFindResults(matches);
+
                     } else if (parser.startsWithWord(line, "mark")) {
                         int idx = parser.parseIndexOrThrow(line, "mark") - 1;
                         requireValidIndex(idx);
@@ -208,6 +216,11 @@ public class Yuri {
 
         String getStatusIcon() {
             return isDone ? "X" : " ";
+        }
+
+        /** Returns the description of this task. */
+        public String getDescription() {
+            return description;
         }
 
         @Override
