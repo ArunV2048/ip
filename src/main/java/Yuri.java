@@ -9,66 +9,28 @@ import java.time.format.DateTimeFormatter;
 
 public class Yuri {
 
-    private static final String BOT_NAME = "Yuri";
-
-    private static final String HLINE = "____________________________________________________________";
-    private static final List<Task> tasks = new ArrayList<>();
+    private static final Parser parser = new Parser();
+    private final TaskList tasks;;
 
 
     private static final int MAX_TASKS = 100;
-    //private static final String[] tasks = new String[MAX_TASKS];
     //private static final Task[] tasks = new Task[MAX_TASKS];
     private static int taskCount = 0;
 
-    //UI HELPERS
 
-
-    private static void printGreeting() {
-        System.out.println(HLINE);
-        System.out.println(" Hello! I'm " + BOT_NAME);
-        System.out.println(" What can I do for you?");
-        System.out.println(" (Tip: type anything to add; 'list' to see; 'mark n'/'unmark n'; 'bye' to exit.)");
-        System.out.println(HLINE);
-    }
-
-
-    private static void printFarewell() {
-        System.out.println(HLINE);
-        System.out.println(" Bye. Hope to see you again soon!");
-        System.out.println(" That was fun—high five for productivity!");
-        System.out.println(HLINE);
-    }
-
-    private static void printBlock(String... lines) {
-        System.out.println(HLINE);
-        for (String s : lines) System.out.println(s);
-        System.out.println(HLINE);
-    }
-
-    private static void printError(String message) {
-        printBlock(" OOPS!!! " + message);
-    }
-
+    private static final Ui ui = new Ui();
     // ADD/LIST/MARK/UNMARK
+    private static final Storage storage = new Storage("data/duke.txt");
 
-
-    private static void addTask(Task task) throws YuriException {
-        if (task == null || task.description == null || task.description.trim().isEmpty()) {
-            throw new YuriException("Task description cannot be empty.");
-        }
-        tasks.add(task);
-        System.out.println(HLINE);
-        System.out.println(" Got it. I've added this task:");
-        System.out.println("   " + task);
-        System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
-
+    public Yuri() {
+        TaskList loaded;
         try {
-            new Yuri().new Storage("data/duke.txt").save(new ArrayList<>(tasks));
+            loaded = new TaskList(storage.load()); // loads from file
         } catch (IOException e) {
-            printError("Failed to save: " + e.getMessage());
+            ui.showError("Error loading save file: " + e.getMessage());
+            loaded = new TaskList(); // empty if load fails
         }
-
-        System.out.println(HLINE);
+        this.tasks = loaded;
     }
 
     // (Kept for backward compatibility if you type free text; now treated as Todo)
@@ -76,196 +38,187 @@ public class Yuri {
 //        addTask(new Todo(description));
 //    }
 
-    private static void printList() {
-        System.out.println(HLINE);
-        System.out.println(" Here are the tasks in your list:");
-        for (int i = 0; i < tasks.size(); i++) {
-            System.out.println(" " + (i + 1) + "." + tasks.get(i));
-        }
-        System.out.println(HLINE);
-    }
-
-
-    private static void handleMark(String line) throws YuriException {
-        int idx = parseIndexOrThrow(line, "mark");
-        int i = idx - 1;
-        requireValidIndex(i);
-        tasks.get(i).mark();
-        printBlock(
-                " Nice! I've marked this task as done:",
-                "   " + tasks.get(i)
-        );
-    }
-
-
-    private static void handleUnmark(String line) throws YuriException {
-        int idx = parseIndexOrThrow(line, "unmark");
-        int i = idx - 1;
-        requireValidIndex(i);
-        tasks.get(i).unmark();
-        printBlock(
-                " OK, I've marked this task as not done yet:",
-                "   " + tasks.get(i)
-        );
-    }
-
-    private static void handleDelete(String line) throws YuriException {
-        int idx = parseIndexOrThrow(line, "delete");
-        int i = idx - 1;
-        requireValidIndex(i);
-        Task removed = tasks.remove(i);
-        System.out.println(HLINE);
-        System.out.println(" Noted. I've removed this task:");
-        System.out.println("   " + removed);
-        System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
-        System.out.println(HLINE);
-    }
 
 
     //LEVEL 4 COMMANDS
 
-    private static void handleTodo(String line) throws YuriException {
-        String desc = sliceAfter(line, "todo");
-        if (desc.isBlank()) throw new YuriException("The description of a todo cannot be empty.");
-        addTask(new Todo(desc));
-    }
-
-    private static void handleDeadline(String line) throws YuriException {
-        String payload = sliceAfter(line, "deadline");
-        String[] parts = splitOnceOrThrow(payload, "/by",
-                "Deadline needs '/by <when>'. Example: deadline return book /by Sunday");
-        String desc = parts[0].trim();
-        String by = parts[1].trim();
-        if (desc.isEmpty()) throw new YuriException("Deadline description cannot be empty.");
-        if (by.isEmpty()) throw new YuriException("Please specify when the deadline is due after '/by'.");
-        addTask(new Deadline(desc, by));
-    }
-
-
-    private static void handleEvent(String line) throws YuriException {
-        String payload = sliceAfter(line, "event");
-        String[] pFrom = splitOnceOrThrow(payload, "/from",
-                "Event needs '/from <start>'. Example: event meeting /from Mon 2pm /to 3pm");
-        String desc = pFrom[0].trim();
-        String rest = pFrom[1].trim();
-        String[] pTo = splitOnceOrThrow(rest, "/to",
-                "Event needs '/to <end>'. Example: event meeting /from Mon 2pm /to 3pm");
-        String from = pTo[0].trim();
-        String to = pTo[1].trim();
-        if (desc.isEmpty()) throw new YuriException("Event description cannot be empty.");
-        if (from.isEmpty()) throw new YuriException("Please specify the event start after '/from'.");
-        if (to.isEmpty()) throw new YuriException("Please specify the event end after '/to'.");
-        addTask(new Event(desc, from, to));
-    }
 
     //HELPERS
 
-
-    private static boolean startsWithWord(String line, String word) {
-        String lw = line.toLowerCase();
-        String ww = word.toLowerCase();
-        return lw.equals(ww) || lw.startsWith(ww + " ");
-    }
-
-    private static String sliceAfter(String line, String headWord) {
-        String trimmed = line.trim();
-        if (trimmed.length() <= headWord.length()) return "";
-        return trimmed.substring(headWord.length()).trim();
-    }
-
-    private static String[] splitOnceOrThrow(String s, String token, String errMsg) throws YuriException {
-        int pos = indexOfToken(s, token);
-        if (pos < 0) throw new YuriException(errMsg);
-        String left = s.substring(0, pos);
-        String right = s.substring(pos + token.length()).trim();
-        return new String[] { left, right };
-    }
-
-    private static int indexOfToken(String s, String token) {
-        String low = s.toLowerCase();
-        String t = token.toLowerCase();
-        int i = low.indexOf(t);
-        if (i >= 0) return i;
-        i = low.indexOf(" " + t);
-        if (i >= 0) return i + 1;
-        return -1;
-    }
-
-    private static int parseIndexOrThrow(String line, String cmd) throws YuriException {
-        String[] parts = line.split("\\s+");
-        if (parts.length != 2) {
-            throw new YuriException("Use: '" + cmd + " <number>' with exactly one number.");
-        }
-        try {
-            int idx = Integer.parseInt(parts[1]);
-            if (idx <= 0) throw new NumberFormatException();
-            return idx;
-        } catch (NumberFormatException e) {
-            throw new YuriException("Index must be a positive number. Example: '" + cmd + " 2'.");
-        }
-    }
-
-    private static void requireValidIndex(int i) throws YuriException {
-        if (i < 0 || i >= tasks.size()) {
-            throw new YuriException("That task number doesn't exist yet. Try 'list' to see valid numbers.");
-        }
-    }
-
     //MAIN
 
+//    public static void main(String[] args) {
+//
+//        try {
+//            ArrayList<Task> loaded = storage.load();
+//            tasks.addAll(loaded);
+//        } catch (IOException e) {
+//            ui.showError("Error loading save file: " + e.getMessage());
+//        }
+//
+//        new Yuri().ui.showGreeting();
+//
+//        try (Scanner sc = new Scanner(System.in)) {
+//            while (true) {
+//                if (!sc.hasNextLine()) {
+//                    new Yuri().ui.showFarewell();
+//                    break;
+//                }
+//                String line = sc.nextLine().trim();
+//                if (line.isEmpty()) continue;
+//
+//                try {
+//                    if (line.toLowerCase().startsWith("list")) {
+//                        if (line.strip().contains(" ")) {
+//                            throw new YuriException("Just type 'list' with no extra words.");
+//                        }
+//                        new Yuri().ui.showList(tasks);
+//                    } else if (line.toLowerCase().startsWith("bye")) {
+//                        if (line.strip().contains(" ")) {
+//                            throw new YuriException("Just type 'bye' with no extra words.");
+//                        }
+//                        new Yuri().ui.showFarewell();
+//                        break;
+//                    } else if (parser.startsWithWord(line, "mark")) {
+//                        handleMark(line);
+//                    } else if (parser.startsWithWord(line, "unmark")) {
+//                        handleUnmark(line);
+//                    } else if (parser.startsWithWord(line, "delete")) {
+//                        handleDelete(line);
+//                    } else if (parser.startsWithWord(line, "todo")) {
+//                        handleTodo(line);
+//                    } else if (parser.startsWithWord(line, "deadline")) {
+//                        handleDeadline(line);
+//                    } else if (parser.startsWithWord(line, "event")) {
+//                        handleEvent(line);
+//                    } else {
+//                        throw new YuriException("I don’t recognize that command. Try: todo, deadline, event, list, mark, unmark, delete, bye.");
+//                    }
+//                } catch (YuriException e) {
+//                    ui.showError(e.getMessage());
+//                }
+//            }
+//        }
+//    }
+
     public static void main(String[] args) {
+        new Yuri().run();
+    }
 
-        try {
-            ArrayList<Task> loaded = new Yuri().new Storage("data/duke.txt").load();
-            tasks.addAll(loaded);
-        } catch (IOException e) {
-            printError("Error loading save file: " + e.getMessage());
-        }
 
-        printGreeting();
-
+    public void run() {
+        ui.showGreeting();
         try (Scanner sc = new Scanner(System.in)) {
             while (true) {
                 if (!sc.hasNextLine()) {
-                    printFarewell();
+                    ui.showFarewell();
                     break;
                 }
                 String line = sc.nextLine().trim();
                 if (line.isEmpty()) continue;
 
                 try {
-                    if (line.toLowerCase().startsWith("list")) {
-                        if (line.strip().contains(" ")) {
+                    if (parser.startsWithWord(line, "list")) {
+                        if (line.strip().contains(" "))
                             throw new YuriException("Just type 'list' with no extra words.");
-                        }
-                        printList();
-                    } else if (line.toLowerCase().startsWith("bye")) {
-                        if (line.strip().contains(" ")) {
+                        ui.showList(tasks.all());
+
+                    } else if (parser.startsWithWord(line, "bye")) {
+                        if (line.strip().contains(" "))
                             throw new YuriException("Just type 'bye' with no extra words.");
-                        }
-                        printFarewell();
+                        ui.showFarewell();
                         break;
-                    } else if (startsWithWord(line, "mark")) {
-                        handleMark(line);
-                    } else if (startsWithWord(line, "unmark")) {
-                        handleUnmark(line);
-                    } else if (startsWithWord(line, "delete")) {
-                        handleDelete(line);
-                    } else if (startsWithWord(line, "todo")) {
-                        handleTodo(line);
-                    } else if (startsWithWord(line, "deadline")) {
-                        handleDeadline(line);
-                    } else if (startsWithWord(line, "event")) {
-                        handleEvent(line);
+
+                    } else if (parser.startsWithWord(line, "mark")) {
+                        int idx = parser.parseIndexOrThrow(line, "mark") - 1;
+                        requireValidIndex(idx);
+                        tasks.mark(idx);
+                        ui.showMark(tasks.get(idx));
+                        persist();
+
+                    } else if (parser.startsWithWord(line, "unmark")) {
+                        int idx = parser.parseIndexOrThrow(line, "unmark") - 1;
+                        requireValidIndex(idx);
+                        tasks.unmark(idx);
+                        ui.showUnmark(tasks.get(idx));
+                        persist();
+
+                    } else if (parser.startsWithWord(line, "delete")) {
+                        int idx = parser.parseIndexOrThrow(line, "delete") - 1;
+                        requireValidIndex(idx);
+                        Yuri.Task removed = tasks.remove(idx);
+                        ui.showDeleted(removed, tasks.size());
+                        persist();
+
+                    } else if (parser.startsWithWord(line, "todo")) {
+                        String desc = parser.sliceAfter(line, "todo");
+                        if (desc.isBlank())
+                            throw new YuriException("The description of a todo cannot be empty.");
+                        Yuri.Task t = new Todo(desc);
+                        tasks.add(t);
+                        ui.showAdded(t, tasks.size());
+                        persist();
+
+                    } else if (parser.startsWithWord(line, "deadline")) {
+                        String payload = parser.sliceAfter(line, "deadline");
+                        String[] parts = parser.splitOnceOrThrow(payload, "/by",
+                                "Deadline needs '/by <when>'. Example: deadline return book /by 2019-12-02");
+                        String desc = parts[0].trim();
+                        String by = parts[1].trim();
+                        if (desc.isEmpty())
+                            throw new YuriException("Deadline description cannot be empty.");
+                        if (by.isEmpty())
+                            throw new YuriException("Please specify when the deadline is due after '/by'.");
+                        Yuri.Task t = new Deadline(desc, by);
+                        tasks.add(t);
+                        ui.showAdded(t, tasks.size());
+                        persist();
+
+                    } else if (parser.startsWithWord(line, "event")) {
+                        String payload = parser.sliceAfter(line, "event");
+                        String[] pFrom = parser.splitOnceOrThrow(payload, "/from",
+                                "Event needs '/from <start>'. Example: event meeting /from 2019-12-10 /to 2019-12-12");
+                        String desc = pFrom[0].trim();
+                        String rest = pFrom[1].trim();
+                        String[] pTo = parser.splitOnceOrThrow(rest, "/to",
+                                "Event needs '/to <end>'. Example: event meeting /from 2019-12-10 /to 2019-12-12");
+                        String from = pTo[0].trim();
+                        String to = pTo[1].trim();
+                        if (desc.isEmpty()) throw new YuriException("Event description cannot be empty.");
+                        if (from.isEmpty()) throw new YuriException("Please specify the event start after '/from'.");
+                        if (to.isEmpty()) throw new YuriException("Please specify the event end after '/to'.");
+                        Yuri.Task t = new Event(desc, from, to);
+                        tasks.add(t);
+                        ui.showAdded(t, tasks.size());
+                        persist();
+
                     } else {
                         throw new YuriException("I don’t recognize that command. Try: todo, deadline, event, list, mark, unmark, delete, bye.");
                     }
                 } catch (YuriException e) {
-                    printError(e.getMessage());
+                    ui.showError(e.getMessage());
                 }
             }
         }
     }
+
+    private void requireValidIndex(int i) throws YuriException {
+        if (i < 0 || i >= tasks.size()) {
+            throw new YuriException("That task number doesn't exist yet. Try 'list' to see valid numbers.");
+        }
+    }
+
+    private void persist() {
+        try {
+            storage.save(tasks.all());
+        } catch (IOException e) {
+            ui.showError("Failed to save: " + e.getMessage());
+        }
+    }
+
+
+
+
 
     //TASK + SUBCLASSES (INNER)
 
@@ -357,72 +310,6 @@ public class Yuri {
         }
     }
 
-    public class Storage {
-        private final String filePath;
-
-        public Storage(String filePath) {
-            this.filePath = filePath;
-        }
-
-        public ArrayList<Task> load() throws IOException {
-            ArrayList<Task> tasks = new ArrayList<>();
-            File file = new File(filePath);
-
-            if (!file.exists()) {
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-                return tasks; // empty list
-            }
-
-            Scanner sc = new Scanner(file);
-            while (sc.hasNextLine()) {
-                String line = sc.nextLine();
-                Task task = parseTask(line); // <-- you’ll implement this
-                tasks.add(task);
-            }
-            sc.close();
-            return tasks;
-        }
-
-        public void save(ArrayList<Task> tasks) throws IOException {
-            FileWriter fw = new FileWriter(filePath);
-            for (Task task : tasks) {
-                fw.write(task.toSaveFormat() + System.lineSeparator());
-            }
-            fw.close();
-        }
-
-        private Task parseTask(String line) {
-            // Expected formats:
-            // T | 0/1 | description
-            // D | 0/1 | description | by
-            // E | 0/1 | description | from | to
-            String[] parts = line.split("\\s*\\|\\s*");
-            if (parts.length < 3) return null;
-
-            String type = parts[0];
-            boolean done = "1".equals(parts[1]);
-            Task t;
-
-            switch (type) {
-                case "T":
-                    t = new Todo(parts[2]);
-                    break;
-                case "D":
-                    t = new Deadline(parts[2], parts[3]); // parts[3] = yyyy-MM-dd
-                    break;
-                case "E":
-                    t = new Event(parts[2], parts[3], parts[4]); // from/to = yyyy-MM-dd
-                    break;
-                default:
-                    return null;
-            }
-
-            if (done) t.mark();
-            return t;
-        }
-
-    }
 }
 
 
