@@ -21,6 +21,7 @@ public class Yuri {
     //UI HELPERS
     private static final Ui ui = new Ui();
     // ADD/LIST/MARK/UNMARK
+    private static final Storage storage = new Storage("data/duke.txt");
 
 
     private static void addTask(Task task) throws YuriException {
@@ -30,9 +31,9 @@ public class Yuri {
         tasks.add(task);
 
         try {
-            new Yuri().new Storage("data/duke.txt").save(new ArrayList<>(tasks));
-        } catch (IOException e) {
-            new Yuri().ui.showError("Failed to save: " + e.getMessage());
+            storage.save(tasks);
+        } catch (java.io.IOException e) {
+            ui.showError("Failed to save: " + e.getMessage());
         }
 
         new Yuri().ui.showAdded(task, tasks.size());
@@ -165,7 +166,7 @@ public class Yuri {
     public static void main(String[] args) {
 
         try {
-            ArrayList<Task> loaded = new Yuri().new Storage("data/duke.txt").load();
+            ArrayList<Task> loaded = storage.load();
             tasks.addAll(loaded);
         } catch (IOException e) {
             ui.showError("Error loading save file: " + e.getMessage());
@@ -306,72 +307,6 @@ public class Yuri {
         }
     }
 
-    public class Storage {
-        private final String filePath;
-
-        public Storage(String filePath) {
-            this.filePath = filePath;
-        }
-
-        public ArrayList<Task> load() throws IOException {
-            ArrayList<Task> tasks = new ArrayList<>();
-            File file = new File(filePath);
-
-            if (!file.exists()) {
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-                return tasks; // empty list
-            }
-
-            Scanner sc = new Scanner(file);
-            while (sc.hasNextLine()) {
-                String line = sc.nextLine();
-                Task task = parseTask(line); // <-- you’ll implement this
-                tasks.add(task);
-            }
-            sc.close();
-            return tasks;
-        }
-
-        public void save(ArrayList<Task> tasks) throws IOException {
-            FileWriter fw = new FileWriter(filePath);
-            for (Task task : tasks) {
-                fw.write(task.toSaveFormat() + System.lineSeparator());
-            }
-            fw.close();
-        }
-
-        private Task parseTask(String line) {
-            // Expected formats:
-            // T | 0/1 | description
-            // D | 0/1 | description | by
-            // E | 0/1 | description | from | to
-            String[] parts = line.split("\\s*\\|\\s*");
-            if (parts.length < 3) return null;
-
-            String type = parts[0];
-            boolean done = "1".equals(parts[1]);
-            Task t;
-
-            switch (type) {
-                case "T":
-                    t = new Todo(parts[2]);
-                    break;
-                case "D":
-                    t = new Deadline(parts[2], parts[3]); // parts[3] = yyyy-MM-dd
-                    break;
-                case "E":
-                    t = new Event(parts[2], parts[3], parts[4]); // from/to = yyyy-MM-dd
-                    break;
-                default:
-                    return null;
-            }
-
-            if (done) t.mark();
-            return t;
-        }
-
-    }
 }
 
 
