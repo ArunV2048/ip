@@ -398,7 +398,7 @@ public class Yuri {
             // D | 0/1 | description | by
             // E | 0/1 | description | from | to
             String[] parts = line.split("\\s*\\|\\s*");
-            if (parts.length < 3) return null; // or throw
+            if (parts.length < 3) return null;
 
             String type = parts[0];
             boolean done = "1".equals(parts[1]);
@@ -409,16 +409,15 @@ public class Yuri {
                     t = new Todo(parts[2]);
                     break;
                 case "D":
-                    if (parts.length < 4) return null;
-                    t = new Deadline(parts[2], parts[3]);
+                    t = new Deadline(parts[2], parts[3]); // parts[3] = yyyy-MM-dd
                     break;
                 case "E":
-                    if (parts.length < 5) return null;
-                    t = new Event(parts[2], parts[3], parts[4]);
+                    t = new Event(parts[2], parts[3], parts[4]); // from/to = yyyy-MM-dd
                     break;
                 default:
                     return null;
             }
+
             if (done) t.mark();
             return t;
         }
