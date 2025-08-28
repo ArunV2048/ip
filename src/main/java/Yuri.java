@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class Yuri {
 
@@ -302,27 +304,47 @@ public class Yuri {
     }
 
     static class Deadline extends Task {
-        private final String by;
-        Deadline(String description, String by) { super(description); this.by = by; }
-        @Override public String toString() { return "[D]" + super.toString() + " (by: " + by + ")"; }
-        @Override public String toSaveFormat() {
-            return "D | " + (isDone ? "1" : "0") + " | " + description + " | " + by;
+        private final LocalDate by;
+
+        Deadline(String description, String by) {
+            super(description);
+            this.by = LocalDate.parse(by); // input must be yyyy-MM-dd
+        }
+
+        @Override
+        public String toString() {
+            return "[D]" + super.toString() + " (by: "
+                    + by.format(DateTimeFormatter.ofPattern("MMM d yyyy")) + ")";
+        }
+
+        @Override
+        public String toSaveFormat() {
+            return "D | " + (isDone ? "1" : "0") + " | "
+                    + description + " | " + by; // saves as yyyy-MM-dd
         }
     }
 
     static class Event extends Task {
-        private final String from;
-        private final String to;
+        private final LocalDate from;
+        private final LocalDate to;
+
         Event(String description, String from, String to) {
             super(description);
-            this.from = from;
-            this.to = to;
+            this.from = LocalDate.parse(from);
+            this.to = LocalDate.parse(to);
         }
-        @Override public String toString() {
-            return "[E]" + super.toString() + " (from: " + from + " to: " + to + ")";
+
+        @Override
+        public String toString() {
+            return "[E]" + super.toString() + " (from: "
+                    + from.format(DateTimeFormatter.ofPattern("MMM d yyyy"))
+                    + " to: " + to.format(DateTimeFormatter.ofPattern("MMM d yyyy")) + ")";
         }
-        @Override public String toSaveFormat() {
-            return "E | " + (isDone ? "1" : "0") + " | " + description + " | " + from + " | " + to;
+
+        @Override
+        public String toSaveFormat() {
+            return "E | " + (isDone ? "1" : "0") + " | "
+                    + description + " | " + from + " | " + to;
         }
     }
 
@@ -376,7 +398,7 @@ public class Yuri {
             // D | 0/1 | description | by
             // E | 0/1 | description | from | to
             String[] parts = line.split("\\s*\\|\\s*");
-            if (parts.length < 3) return null; // or throw
+            if (parts.length < 3) return null;
 
             String type = parts[0];
             boolean done = "1".equals(parts[1]);
@@ -387,16 +409,15 @@ public class Yuri {
                     t = new Todo(parts[2]);
                     break;
                 case "D":
-                    if (parts.length < 4) return null;
-                    t = new Deadline(parts[2], parts[3]);
+                    t = new Deadline(parts[2], parts[3]); // parts[3] = yyyy-MM-dd
                     break;
                 case "E":
-                    if (parts.length < 5) return null;
-                    t = new Event(parts[2], parts[3], parts[4]);
+                    t = new Event(parts[2], parts[3], parts[4]); // from/to = yyyy-MM-dd
                     break;
                 default:
                     return null;
             }
+
             if (done) t.mark();
             return t;
         }
