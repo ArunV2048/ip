@@ -9,9 +9,7 @@ import java.time.format.DateTimeFormatter;
 
 public class Yuri {
 
-    private static final String BOT_NAME = "Yuri";
 
-    private static final String HLINE = "____________________________________________________________";
     private static final List<Task> tasks = new ArrayList<>();
 
 
@@ -21,34 +19,7 @@ public class Yuri {
     private static int taskCount = 0;
 
     //UI HELPERS
-
-
-    private static void printGreeting() {
-        System.out.println(HLINE);
-        System.out.println(" Hello! I'm " + BOT_NAME);
-        System.out.println(" What can I do for you?");
-        System.out.println(" (Tip: type anything to add; 'list' to see; 'mark n'/'unmark n'; 'bye' to exit.)");
-        System.out.println(HLINE);
-    }
-
-
-    private static void printFarewell() {
-        System.out.println(HLINE);
-        System.out.println(" Bye. Hope to see you again soon!");
-        System.out.println(" That was fun—high five for productivity!");
-        System.out.println(HLINE);
-    }
-
-    private static void printBlock(String... lines) {
-        System.out.println(HLINE);
-        for (String s : lines) System.out.println(s);
-        System.out.println(HLINE);
-    }
-
-    private static void printError(String message) {
-        printBlock(" OOPS!!! " + message);
-    }
-
+    private static final Ui ui = new Ui();
     // ADD/LIST/MARK/UNMARK
 
 
@@ -57,18 +28,14 @@ public class Yuri {
             throw new YuriException("Task description cannot be empty.");
         }
         tasks.add(task);
-        System.out.println(HLINE);
-        System.out.println(" Got it. I've added this task:");
-        System.out.println("   " + task);
-        System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
 
         try {
             new Yuri().new Storage("data/duke.txt").save(new ArrayList<>(tasks));
         } catch (IOException e) {
-            printError("Failed to save: " + e.getMessage());
+            new Yuri().ui.showError("Failed to save: " + e.getMessage());
         }
 
-        System.out.println(HLINE);
+        new Yuri().ui.showAdded(task, tasks.size());
     }
 
     // (Kept for backward compatibility if you type free text; now treated as Todo)
@@ -76,14 +43,6 @@ public class Yuri {
 //        addTask(new Todo(description));
 //    }
 
-    private static void printList() {
-        System.out.println(HLINE);
-        System.out.println(" Here are the tasks in your list:");
-        for (int i = 0; i < tasks.size(); i++) {
-            System.out.println(" " + (i + 1) + "." + tasks.get(i));
-        }
-        System.out.println(HLINE);
-    }
 
 
     private static void handleMark(String line) throws YuriException {
@@ -91,10 +50,7 @@ public class Yuri {
         int i = idx - 1;
         requireValidIndex(i);
         tasks.get(i).mark();
-        printBlock(
-                " Nice! I've marked this task as done:",
-                "   " + tasks.get(i)
-        );
+        new Yuri().ui.showMark(tasks.get(i));
     }
 
 
@@ -103,10 +59,7 @@ public class Yuri {
         int i = idx - 1;
         requireValidIndex(i);
         tasks.get(i).unmark();
-        printBlock(
-                " OK, I've marked this task as not done yet:",
-                "   " + tasks.get(i)
-        );
+        new Yuri().ui.showUnmark(tasks.get(i));
     }
 
     private static void handleDelete(String line) throws YuriException {
@@ -114,11 +67,7 @@ public class Yuri {
         int i = idx - 1;
         requireValidIndex(i);
         Task removed = tasks.remove(i);
-        System.out.println(HLINE);
-        System.out.println(" Noted. I've removed this task:");
-        System.out.println("   " + removed);
-        System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
-        System.out.println(HLINE);
+        new Yuri().ui.showDeleted(removed, tasks.size());
     }
 
 
@@ -219,15 +168,15 @@ public class Yuri {
             ArrayList<Task> loaded = new Yuri().new Storage("data/duke.txt").load();
             tasks.addAll(loaded);
         } catch (IOException e) {
-            printError("Error loading save file: " + e.getMessage());
+            ui.showError("Error loading save file: " + e.getMessage());
         }
 
-        printGreeting();
+        new Yuri().ui.showGreeting();
 
         try (Scanner sc = new Scanner(System.in)) {
             while (true) {
                 if (!sc.hasNextLine()) {
-                    printFarewell();
+                    new Yuri().ui.showFarewell();
                     break;
                 }
                 String line = sc.nextLine().trim();
@@ -238,12 +187,12 @@ public class Yuri {
                         if (line.strip().contains(" ")) {
                             throw new YuriException("Just type 'list' with no extra words.");
                         }
-                        printList();
+                        new Yuri().ui.showList(tasks);
                     } else if (line.toLowerCase().startsWith("bye")) {
                         if (line.strip().contains(" ")) {
                             throw new YuriException("Just type 'bye' with no extra words.");
                         }
-                        printFarewell();
+                        new Yuri().ui.showFarewell();
                         break;
                     } else if (startsWithWord(line, "mark")) {
                         handleMark(line);
@@ -261,7 +210,7 @@ public class Yuri {
                         throw new YuriException("I don’t recognize that command. Try: todo, deadline, event, list, mark, unmark, delete, bye.");
                     }
                 } catch (YuriException e) {
-                    printError(e.getMessage());
+                    ui.showError(e.getMessage());
                 }
             }
         }
