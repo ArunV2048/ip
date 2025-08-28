@@ -5,6 +5,9 @@ import java.util.Scanner;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
+/** Entry point and main control loop for the application.
+ *  Wires together {@link Ui}, {@link Storage}, and {@link TaskList}, then processes user commands until exit.
+ */
 public class Yuri {
 
     private static final Parser parser = new Parser();
@@ -20,6 +23,9 @@ public class Yuri {
     // ADD/LIST/MARK/UNMARK
     private static final Storage storage = new Storage("data/duke.txt");
 
+    /** Constructs the app, loading tasks from storage if available.
+     *  If loading fails, initializes with an empty task list and shows an error.
+     */
     public Yuri() {
         TaskList loaded;
         try {
@@ -99,11 +105,17 @@ public class Yuri {
 //        }
 //    }
 
+    /** Program entry point.
+     *  @param args command-line arguments (unused)
+     */
     public static void main(String[] args) {
         new Yuri().run();
     }
 
 
+    /** Runs the interactive command loop: reads a line, parses it, mutates state,
+     *  persists when necessary, and renders output via {@link Ui}. Exits on {@code bye} or EOF.
+     */
     public void run() {
         ui.showGreeting();
         try (Scanner sc = new Scanner(System.in)) {
@@ -200,12 +212,18 @@ public class Yuri {
         }
     }
 
+    /** Ensures the given zero-based index refers to an existing task.
+     *  @param i zero-based index to check
+     *  @throws YuriException if the index is invalid
+     */
     private void requireValidIndex(int i) throws YuriException {
         if (i < 0 || i >= tasks.size()) {
             throw new YuriException("That task number doesn't exist yet. Try 'list' to see valid numbers.");
         }
     }
 
+    /** Persists the current task list to storage,
+     * reporting any I/O errors via {@link Ui}. */
     private void persist() {
         try {
             storage.save(tasks.all());
