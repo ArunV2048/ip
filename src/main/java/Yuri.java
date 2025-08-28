@@ -11,6 +11,7 @@ public class Yuri {
 
 
     private static final List<Task> tasks = new ArrayList<>();
+    private static final Parser parser = new Parser();
 
 
     private static final int MAX_TASKS = 100;
@@ -47,7 +48,7 @@ public class Yuri {
 
 
     private static void handleMark(String line) throws YuriException {
-        int idx = parseIndexOrThrow(line, "mark");
+        int idx = parser.parseIndexOrThrow(line, "mark");
         int i = idx - 1;
         requireValidIndex(i);
         tasks.get(i).mark();
@@ -56,7 +57,7 @@ public class Yuri {
 
 
     private static void handleUnmark(String line) throws YuriException {
-        int idx = parseIndexOrThrow(line, "unmark");
+        int idx = parser.parseIndexOrThrow(line, "unmark");
         int i = idx - 1;
         requireValidIndex(i);
         tasks.get(i).unmark();
@@ -64,7 +65,7 @@ public class Yuri {
     }
 
     private static void handleDelete(String line) throws YuriException {
-        int idx = parseIndexOrThrow(line, "delete");
+        int idx = parser.parseIndexOrThrow(line, "delete");
         int i = idx - 1;
         requireValidIndex(i);
         Task removed = tasks.remove(i);
@@ -75,14 +76,14 @@ public class Yuri {
     //LEVEL 4 COMMANDS
 
     private static void handleTodo(String line) throws YuriException {
-        String desc = sliceAfter(line, "todo");
+        String desc = parser.sliceAfter(line, "todo");
         if (desc.isBlank()) throw new YuriException("The description of a todo cannot be empty.");
         addTask(new Todo(desc));
     }
 
     private static void handleDeadline(String line) throws YuriException {
-        String payload = sliceAfter(line, "deadline");
-        String[] parts = splitOnceOrThrow(payload, "/by",
+        String payload = parser.sliceAfter(line, "deadline");
+        String[] parts = parser.splitOnceOrThrow(payload, "/by",
                 "Deadline needs '/by <when>'. Example: deadline return book /by Sunday");
         String desc = parts[0].trim();
         String by = parts[1].trim();
@@ -93,12 +94,12 @@ public class Yuri {
 
 
     private static void handleEvent(String line) throws YuriException {
-        String payload = sliceAfter(line, "event");
-        String[] pFrom = splitOnceOrThrow(payload, "/from",
+        String payload = parser.sliceAfter(line, "event");
+        String[] pFrom = parser.splitOnceOrThrow(payload, "/from",
                 "Event needs '/from <start>'. Example: event meeting /from Mon 2pm /to 3pm");
         String desc = pFrom[0].trim();
         String rest = pFrom[1].trim();
-        String[] pTo = splitOnceOrThrow(rest, "/to",
+        String[] pTo = parser.splitOnceOrThrow(rest, "/to",
                 "Event needs '/to <end>'. Example: event meeting /from Mon 2pm /to 3pm");
         String from = pTo[0].trim();
         String to = pTo[1].trim();
@@ -110,50 +111,6 @@ public class Yuri {
 
     //HELPERS
 
-
-    private static boolean startsWithWord(String line, String word) {
-        String lw = line.toLowerCase();
-        String ww = word.toLowerCase();
-        return lw.equals(ww) || lw.startsWith(ww + " ");
-    }
-
-    private static String sliceAfter(String line, String headWord) {
-        String trimmed = line.trim();
-        if (trimmed.length() <= headWord.length()) return "";
-        return trimmed.substring(headWord.length()).trim();
-    }
-
-    private static String[] splitOnceOrThrow(String s, String token, String errMsg) throws YuriException {
-        int pos = indexOfToken(s, token);
-        if (pos < 0) throw new YuriException(errMsg);
-        String left = s.substring(0, pos);
-        String right = s.substring(pos + token.length()).trim();
-        return new String[] { left, right };
-    }
-
-    private static int indexOfToken(String s, String token) {
-        String low = s.toLowerCase();
-        String t = token.toLowerCase();
-        int i = low.indexOf(t);
-        if (i >= 0) return i;
-        i = low.indexOf(" " + t);
-        if (i >= 0) return i + 1;
-        return -1;
-    }
-
-    private static int parseIndexOrThrow(String line, String cmd) throws YuriException {
-        String[] parts = line.split("\\s+");
-        if (parts.length != 2) {
-            throw new YuriException("Use: '" + cmd + " <number>' with exactly one number.");
-        }
-        try {
-            int idx = Integer.parseInt(parts[1]);
-            if (idx <= 0) throw new NumberFormatException();
-            return idx;
-        } catch (NumberFormatException e) {
-            throw new YuriException("Index must be a positive number. Example: '" + cmd + " 2'.");
-        }
-    }
 
     private static void requireValidIndex(int i) throws YuriException {
         if (i < 0 || i >= tasks.size()) {
@@ -195,17 +152,17 @@ public class Yuri {
                         }
                         new Yuri().ui.showFarewell();
                         break;
-                    } else if (startsWithWord(line, "mark")) {
+                    } else if (parser.startsWithWord(line, "mark")) {
                         handleMark(line);
-                    } else if (startsWithWord(line, "unmark")) {
+                    } else if (parser.startsWithWord(line, "unmark")) {
                         handleUnmark(line);
-                    } else if (startsWithWord(line, "delete")) {
+                    } else if (parser.startsWithWord(line, "delete")) {
                         handleDelete(line);
-                    } else if (startsWithWord(line, "todo")) {
+                    } else if (parser.startsWithWord(line, "todo")) {
                         handleTodo(line);
-                    } else if (startsWithWord(line, "deadline")) {
+                    } else if (parser.startsWithWord(line, "deadline")) {
                         handleDeadline(line);
-                    } else if (startsWithWord(line, "event")) {
+                    } else if (parser.startsWithWord(line, "event")) {
                         handleEvent(line);
                     } else {
                         throw new YuriException("I don’t recognize that command. Try: todo, deadline, event, list, mark, unmark, delete, bye.");
