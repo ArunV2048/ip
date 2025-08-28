@@ -1,6 +1,8 @@
 plugins {
     id 'java'
     id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+
 }
 
 application {
@@ -17,4 +19,9 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+shadowJar {
+    // nice, predictable name for your release upload
+    archiveFileName = 'Yuri.jar'
 }
