@@ -1,16 +1,6 @@
-todo borrow book
-deadline return book /by Sunday
-event project meeting /from Mon 2pm /to 4pm
-list
-mark 2
-unmark 2
-todo
-deadline return book
-event team sync
-event team sync /from Mon 2pm
-mark two
-mark 999
-blah
+todo read book
+deadline return book /by 2019-12-02
+event book fair /from 2019-12-10 /to 2019-12-12
+find book
 bye
-delete 3
-list
+

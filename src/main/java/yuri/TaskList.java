@@ -74,6 +74,28 @@ public class TaskList {
     }
 
     /**
+     * Returns all tasks whose description contains the given keyword (case-insensitive).
+     *
+     * @param keyword keyword to search for
+     * @return list of matching tasks (possibly empty)
+     * @throws IllegalArgumentException if keyword is null or blank
+     */
+    public java.util.List<Yuri.Task> find(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw new IllegalArgumentException("Keyword cannot be empty.");
+        }
+        String needle = keyword.toLowerCase();
+        java.util.List<Yuri.Task> results = new java.util.ArrayList<>();
+        for (Yuri.Task t : tasks) {
+            String desc = t.getDescription();
+            if (desc != null && desc.toLowerCase().contains(needle)) {
+                results.add(t);
+            }
+        }
+        return results;
+    }
+
+    /**
      * Returns the number of tasks currently in the list.
      *
      * @return task count

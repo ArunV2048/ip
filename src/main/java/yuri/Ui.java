@@ -15,6 +15,25 @@ public class Ui {
         System.out.println(HLINE);
     }
 
+    /**
+     * Prints tasks that matched a find query. Shows an empty state if none matched.
+     *
+     * @param matches tasks that matched the query
+     */
+    public void showFindResults(java.util.List<Yuri.Task> matches) {
+        line();
+        if (matches.isEmpty()) {
+            System.out.println(" No matching tasks found.");
+            line();
+            return;
+        }
+        System.out.println(" Here are the matching tasks in your list:");
+        for (int i = 0; i < matches.size(); i++) {
+            System.out.println(" " + (i + 1) + "." + matches.get(i));
+        }
+        line();
+    }
+
     /** Prints the greeting header shown at program start. */
     public void showGreeting() {
         line();
