@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="yuri.gui.MainWindow"
+            prefWidth="420.0" prefHeight="600.0">
+    <children>
+        <ScrollPane fx:id="scrollPane" fitToWidth="true"
+                    AnchorPane.topAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                    AnchorPane.rightAnchor="0.0" AnchorPane.bottomAnchor="60.0">
+            <content>
+                <VBox fx:id="dialogContainer" spacing="6.0" fillWidth="true" prefWidth="400.0"/>
+            </content>
+        </ScrollPane>
+
+        <HBox spacing="6.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+              AnchorPane.bottomAnchor="0.0" prefHeight="60.0" style="-fx-padding: 8;">
+            <children>
+                <TextField fx:id="userInput" onAction="#handleUserInput" promptText="Type a command, e.g. todo read book" HBox.hgrow="ALWAYS"/>
+                <Button fx:id="sendButton" text="Send" onAction="#handleUserInput"/>
+            </children>
+        </HBox>
+    </children>
+</AnchorPane>
