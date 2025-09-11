@@ -53,6 +53,7 @@ public class Storage {
                 }
             }
         }
+        assert tasks != null : "Loaded task list should not be null";
         return tasks;
     }
 
@@ -63,6 +64,7 @@ public class Storage {
      * @throws IOException if an I/O error occurs while writing
      */
     public void save(List<Yuri.Task> tasks) throws IOException {
+        assert tasks != null : "Tasks to save must not be null";
         try (FileWriter fw = new FileWriter(filePath)) {
             for (Yuri.Task task : tasks) {
                 fw.write(task.toSaveFormat());
@@ -81,31 +83,27 @@ public class Storage {
         // D | 0/1 | description | yyyy-MM-dd
         // E | 0/1 | description | yyyy-MM-dd | yyyy-MM-dd
         String[] p = line.split("\\s*\\|\\s*");
-        if (p.length < 3) {
-            return null;
-        }
+        if (p.length < 3) return null;
 
         String type = p[0];
         boolean done = "1".equals(p[1]);
-
         Yuri.Task t;
         switch (type) {
-            case "T":
-                t = new Yuri.Todo(p[2]);
-                break;
-            case "D":
-                t = new Yuri.Deadline(p[2], p[3]);
-                break;
-            case "E":
-                t = new Yuri.Event(p[2], p[3], p[4]);
-                break;
-            default:
-                return null;
+        case "T":
+            t = new Yuri.Todo(p[2]);
+            break;
+        case "D":
+             assert p.length >= 4 : "Deadline line must contain a date";
+             t = new Yuri.Deadline(p[2], p[3]);
+             break;
+        case "E":
+            assert p.length >= 5 : "Event line must contain from/to dates";
+            t = new Yuri.Event(p[2], p[3], p[4]);
+            break;
+        default:
+            return null;
         }
-
-        if (done) {
-            t.mark();
-        }
+        if (done) t.mark();
         return t;
     }
 }

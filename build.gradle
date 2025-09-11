@@ -14,8 +14,8 @@ repositories {
 }
 
 dependencies {
+    // JavaFX 17.0.7 with OS-specific classifiers (from the SE-EDU tutorial)
     String javaFxVersion = '17.0.7'
-
     implementation group: 'org.openjfx', name: 'javafx-base', version: javaFxVersion, classifier: 'win'
     implementation group: 'org.openjfx', name: 'javafx-base', version: javaFxVersion, classifier: 'mac'
     implementation group: 'org.openjfx', name: 'javafx-base', version: javaFxVersion, classifier: 'linux'
@@ -36,7 +36,7 @@ test {
 
 shadowJar {
     // nice, predictable name for your release upload
-    archiveFileName = 'Yuri.jar'
+    archiveFileName = 'yuri.jar'
 }
 
 checkstyle {

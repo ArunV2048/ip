@@ -15,6 +15,7 @@ public class Parser {
      * @return true if the first word matches; false otherwise
      */
     public boolean startsWithWord(String line, String word) {
+        assert line != null && word != null : "Null inputs to startsWithWord";
         String lw = line.toLowerCase();
         String ww = word.toLowerCase();
         return lw.equals(ww) || lw.startsWith(ww + " ");
@@ -47,12 +48,14 @@ public class Parser {
      * @throws yuri.Yuri.YuriException if the token cannot be found
      */
     public String[] splitOnceOrThrow(String s, String token, String errMsg) throws Yuri.YuriException {
+        assert s != null && token != null : "Null inputs to splitOnceOrThrow";
         int pos = indexOfToken(s, token);
         if (pos < 0) {
             throw new Yuri.YuriException(errMsg);
         }
         String left = s.substring(0, pos);
         String right = s.substring(pos + token.length()).trim();
+        assert right != null : "Right side should not be null";
         return new String[]{left, right};
     }
 
@@ -88,12 +91,20 @@ public class Parser {
      * @throws yuri.Yuri.YuriException if format is wrong or the number is not a positive integer
      */
     public int parseIndexOrThrow(String line, String cmd) throws Yuri.YuriException {
+        // Assertion: inputs must not be null
+        assert line != null && cmd != null : "Null inputs to parseIndexOrThrow";
+
         String[] parts = line.split("\\s+");
         if (parts.length != 2) {
             throw new Yuri.YuriException("Use: '" + cmd + " <number>' with exactly one number.");
         }
+
         try {
             int idx = Integer.parseInt(parts[1]);
+
+            // Assertion: index should be strictly positive if parsing succeeded
+            assert idx > 0 : "Parsed index must be positive";
+
             if (idx <= 0) {
                 throw new NumberFormatException();
             }
