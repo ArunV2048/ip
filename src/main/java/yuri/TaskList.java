@@ -12,12 +12,16 @@ public class TaskList {
 
     private final List<Yuri.Task> tasks;
 
-    /** Constructs an empty task list. */
+    /**
+     * Constructs an empty task list.
+     */
     public TaskList() {
         this.tasks = new ArrayList<>();
     }
 
-    /** Constructs a task list initialized with the given tasks. */
+    /**
+     * Constructs a task list initialized with the given tasks.
+     */
     public TaskList(List<Yuri.Task> initial) {
         this.tasks = new ArrayList<>(initial);
     }

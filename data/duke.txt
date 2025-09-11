@@ -2,3 +2,4 @@ E | 0 | book fair | 2019-12-10 | 2019-12-12
 T | 0 | read book
 D | 0 | return book | 2025-12-01
 T | 0 | have lunch
+T | 0 | bath

@@ -15,9 +15,12 @@ public class Parser {
      * @return true if the first word matches; false otherwise
      */
     public boolean startsWithWord(String line, String word) {
+        assert line != null && word != null : "Null inputs to startsWithWord";
         String lw = line.toLowerCase();
         String ww = word.toLowerCase();
-        return lw.equals(ww) || lw.startsWith(ww + " ");
+        boolean result = lw.equals(ww) || lw.startsWith(ww + " ");
+        assert (result || !lw.startsWith(word)) || lw.startsWith(ww) : "Case-insensitive check should align";
+        return result;
     }
 
     /**
@@ -29,11 +32,14 @@ public class Parser {
      * @return the argument substring after the command word (trimmed), or empty string
      */
     public String sliceAfter(String line, String headWord) {
+        assert line != null && headWord != null : "Null inputs to sliceAfter";
         String trimmed = line.trim();
         if (trimmed.length() <= headWord.length()) {
             return "";
         }
-        return trimmed.substring(headWord.length()).trim();
+        String out = trimmed.substring(headWord.length()).trim();
+        assert out != null : "sliceAfter: result should not be null";
+        return out;
     }
 
     /**
@@ -47,12 +53,14 @@ public class Parser {
      * @throws yuri.Yuri.YuriException if the token cannot be found
      */
     public String[] splitOnceOrThrow(String s, String token, String errMsg) throws Yuri.YuriException {
+        assert s != null && token != null && errMsg != null : "Null inputs to splitOnceOrThrow";
         int pos = indexOfToken(s, token);
         if (pos < 0) {
             throw new Yuri.YuriException(errMsg);
         }
         String left = s.substring(0, pos);
         String right = s.substring(pos + token.length()).trim();
+        assert left != null && right != null : "Split parts should be non-null";
         return new String[]{left, right};
     }
 
@@ -64,16 +72,20 @@ public class Parser {
      * @return index of match, or -1 if not found
      */
     public int indexOfToken(String s, String token) {
+        assert s != null && token != null : "Null inputs to indexOfToken";
         String low = s.toLowerCase();
         String t = token.toLowerCase();
 
         int i = low.indexOf(t);
         if (i >= 0) {
+            assert s.regionMatches(true, i, token, 0, token.length()) : "Case-insensitive match must align";
             return i;
         }
         i = low.indexOf(" " + t);
         if (i >= 0) {
-            return i + 1;
+            int j = i + 1;
+            assert s.regionMatches(true, j, token, 0, token.length()) : "Case-insensitive match must align (spaced)";
+            return j;
         }
         return -1;
     }
@@ -88,12 +100,15 @@ public class Parser {
      * @throws yuri.Yuri.YuriException if format is wrong or the number is not a positive integer
      */
     public int parseIndexOrThrow(String line, String cmd) throws Yuri.YuriException {
+        assert line != null && cmd != null : "Null inputs to parseIndexOrThrow";
+
         String[] parts = line.split("\\s+");
         if (parts.length != 2) {
             throw new Yuri.YuriException("Use: '" + cmd + " <number>' with exactly one number.");
         }
         try {
             int idx = Integer.parseInt(parts[1]);
+            assert idx > 0 : "Parsed index must be positive";
             if (idx <= 0) {
                 throw new NumberFormatException();
             }
