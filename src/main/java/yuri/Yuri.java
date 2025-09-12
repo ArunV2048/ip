@@ -19,7 +19,7 @@ public class Yuri {
 
     public String getGreeting() {
         return "Hello! I'm Yuri\nWhat can I do for you?\n"
-                + "(Tip: todo, deadline, event, list, mark, unmark, delete, find, bye)";
+                + "(Tip: type 'help' to see all commands)";
     }
 
 
@@ -31,8 +31,17 @@ public class Yuri {
      */
 
     //HELPERS
-    private static final String HELP =
-            "Try: todo, deadline, event, list, mark, unmark, delete, find, bye.";
+    private static final String HELP = String.join("\n",
+            "Commands:",
+            "  list",
+            "  todo <desc>",
+            "  deadline <desc> /by <yyyy-mm-dd>",
+            "  event <desc> /from <yyyy-mm-dd> /to <yyyy-mm-dd>",
+            "  mark <n>     | unmark <n> | delete <n>",
+            "  find <keyword>",
+            "  help",
+            "  bye"
+    );
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("MMM d yyyy");
@@ -48,6 +57,7 @@ public class Yuri {
             switch (cmd) {
                 case "list":     return handleList(line);
                 case "bye":      return "Bye. Hope to see you again soon!";
+                case "help":     return HELP;
                 case "find":     return handleFind(line);
                 case "mark":     return handleMark(line);
                 case "unmark":   return handleUnmark(line);
@@ -55,8 +65,7 @@ public class Yuri {
                 case "todo":     return handleTodo(line);
                 case "deadline": return handleDeadline(line);
                 case "event":    return handleEvent(line);
-                default:         return "I don’t recognize that command. "
-                        + "Try: todo, deadline, event, list, mark, unmark, delete, find, bye.";
+                default:         return "I don’t recognize that command.\n" + HELP;
             }
         } catch (YuriException e) {
             // Convert domain errors into a user-friendly message
