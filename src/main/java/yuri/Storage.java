@@ -21,6 +21,7 @@ public class Storage {
      * @param filePath path of the save file, e.g. {@code data/duke.txt}
      */
     public Storage(String filePath) {
+        assert filePath != null : "Storage filePath must not be null";
         this.filePath = filePath;
     }
 
@@ -34,20 +35,24 @@ public class Storage {
     public ArrayList<Yuri.Task> load() throws IOException {
         ArrayList<Yuri.Task> tasks = new ArrayList<>();
         File file = new File(filePath);
+        assert file != null : "File ref must not be null";
 
         if (!file.exists()) {
             File parent = file.getParentFile();
             if (parent != null) {
                 parent.mkdirs();
             }
-            file.createNewFile();
+            boolean created = file.createNewFile();
+            assert file.exists() || created : "File should exist or be created";
             return tasks;
         }
 
         try (Scanner sc = new Scanner(file)) {
             while (sc.hasNextLine()) {
                 String line = sc.nextLine();
+                assert line != null : "Read line should not be null";
                 Yuri.Task task = parseTask(line);
+                // task may be null for malformed lines by design
                 if (task != null) {
                     tasks.add(task);
                 }
@@ -67,7 +72,10 @@ public class Storage {
         assert tasks != null : "Tasks to save must not be null";
         try (FileWriter fw = new FileWriter(filePath)) {
             for (Yuri.Task task : tasks) {
-                fw.write(task.toSaveFormat());
+                assert task != null : "Individual task must not be null";
+                String line = task.toSaveFormat();
+                assert line != null : "toSaveFormat must not return null";
+                fw.write(line);
                 fw.write(System.lineSeparator());
             }
         }
@@ -78,6 +86,7 @@ public class Storage {
        ========================= */
 
     private Yuri.Task parseTask(String line) {
+        assert line != null : "parseTask input line must not be null";
         // Expected formats:
         // T | 0/1 | description
         // D | 0/1 | description | yyyy-MM-dd
@@ -86,23 +95,27 @@ public class Storage {
         if (p.length < 3) return null;
 
         String type = p[0];
+        assert type != null && !type.isEmpty() : "Task type must be present";
         boolean done = "1".equals(p[1]);
         Yuri.Task t;
+
         switch (type) {
-        case "T":
-            t = new Yuri.Todo(p[2]);
-            break;
-        case "D":
-             assert p.length >= 4 : "Deadline line must contain a date";
-             t = new Yuri.Deadline(p[2], p[3]);
-             break;
-        case "E":
-            assert p.length >= 5 : "Event line must contain from/to dates";
-            t = new Yuri.Event(p[2], p[3], p[4]);
-            break;
-        default:
-            return null;
+            case "T":
+                t = new Yuri.Todo(p[2]);
+                break;
+            case "D":
+                assert p.length >= 4 : "Deadline requires date part";
+                t = new Yuri.Deadline(p[2], p[3]);
+                break;
+            case "E":
+                assert p.length >= 5 : "Event requires start and end dates";
+                t = new Yuri.Event(p[2], p[3], p[4]);
+                break;
+            default:
+                return null;
         }
+
+        assert t != null : "Constructed task should not be null";
         if (done) t.mark();
         return t;
     }
