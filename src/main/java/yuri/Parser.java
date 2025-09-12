@@ -106,6 +106,7 @@ public class Parser {
         if (parts.length != 2) {
             throw new Yuri.YuriException("Use: '" + cmd + " <number>' with exactly one number.");
         }
+
         try {
             int idx = Integer.parseInt(parts[1]);
             assert idx > 0 : "Parsed index must be positive";

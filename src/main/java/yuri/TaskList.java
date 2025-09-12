@@ -23,6 +23,7 @@ public class TaskList {
      * Constructs a task list initialized with the given tasks.
      */
     public TaskList(List<Yuri.Task> initial) {
+        assert initial != null : "Initial task list must not be null";
         this.tasks = new ArrayList<>(initial);
     }
 
@@ -43,6 +44,7 @@ public class TaskList {
      * @throws IndexOutOfBoundsException if {@code idx0} is out of range
      */
     public Yuri.Task get(int idx0) {
+        assert idx0 >= 0 && idx0 < tasks.size() : "Index out of bounds";
         return tasks.get(idx0);
     }
 
@@ -54,6 +56,7 @@ public class TaskList {
      * @throws IndexOutOfBoundsException if {@code idx0} is out of range
      */
     public Yuri.Task remove(int idx0) {
+        assert idx0 >= 0 && idx0 < tasks.size() : "Index out of bounds";
         return tasks.remove(idx0);
     }
 

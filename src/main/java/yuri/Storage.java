@@ -58,7 +58,7 @@ public class Storage {
                 }
             }
         }
-        assert tasks != null : "Tasks list should not be null";
+        assert tasks != null : "Loaded task list should not be null";
         return tasks;
     }
 
@@ -69,7 +69,7 @@ public class Storage {
      * @throws IOException if an I/O error occurs while writing
      */
     public void save(List<Yuri.Task> tasks) throws IOException {
-        assert tasks != null : "tasks to save must not be null";
+        assert tasks != null : "Tasks to save must not be null";
         try (FileWriter fw = new FileWriter(filePath)) {
             for (Yuri.Task task : tasks) {
                 assert task != null : "Individual task must not be null";
@@ -92,15 +92,13 @@ public class Storage {
         // D | 0/1 | description | yyyy-MM-dd
         // E | 0/1 | description | yyyy-MM-dd | yyyy-MM-dd
         String[] p = line.split("\\s*\\|\\s*");
-        if (p.length < 3) {
-            return null;
-        }
+        if (p.length < 3) return null;
 
         String type = p[0];
         assert type != null && !type.isEmpty() : "Task type must be present";
         boolean done = "1".equals(p[1]);
-
         Yuri.Task t;
+
         switch (type) {
             case "T":
                 t = new Yuri.Todo(p[2]);
@@ -118,9 +116,7 @@ public class Storage {
         }
 
         assert t != null : "Constructed task should not be null";
-        if (done) {
-            t.mark();
-        }
+        if (done) t.mark();
         return t;
     }
 }
