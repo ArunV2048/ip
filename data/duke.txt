@@ -5,3 +5,4 @@ T | 0 | have lunch
 T | 0 | eat
 T | 1 | bath
 D | 0 | finish homework | 2025-09-11
+T | 0 | sleep

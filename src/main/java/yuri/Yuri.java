@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
+import java.time.format.DateTimeParseException;
 
 /**
  * Entry point and main control loop for the application.
@@ -21,8 +22,6 @@ public class Yuri {
         return "Hello! I'm Yuri\nWhat can I do for you?\n"
                 + "(Tip: type 'help' to see all commands)";
     }
-
-
 
     /* Handles one user input and returns the response text for the GUI. */
     /**
@@ -128,10 +127,11 @@ public class Yuri {
         String[] parts = parser.splitOnceOrThrow(payload, "/by",
                 "Deadline needs '/by <when>'. Example: deadline return book /by 2019-12-02");
         String desc = parts[0].trim();
-        String by = parts[1].trim();
+        String byStr = parts[1].trim();
         if (desc.isEmpty()) throw new YuriException("Deadline description cannot be empty.");
-        if (by.isEmpty()) throw new YuriException("Please specify when the deadline is due after '/by'.");
-        Task t = new Deadline(desc, by);
+        // validate date format (yyyy-MM-dd)
+        LocalDate by = parseIsoDateOrThrow(byStr, "Deadline date");
+        Task t = new Deadline(desc, by.toString());
         tasks.add(t);
         persist();
         return "Got it. I've added this task:\n   " + t
@@ -146,12 +146,20 @@ public class Yuri {
         String rest = pFrom[1].trim();
         String[] pTo = parser.splitOnceOrThrow(rest, "/to",
                 "Event needs '/to <end>'. Example: event meeting /from 2019-12-10 /to 2019-12-12");
-        String from = pTo[0].trim();
-        String to = pTo[1].trim();
+        String fromStr = pTo[0].trim();
+        String toStr = pTo[1].trim();
         if (desc.isEmpty()) throw new YuriException("Event description cannot be empty.");
-        if (from.isEmpty()) throw new YuriException("Please specify the event start after '/from'.");
-        if (to.isEmpty()) throw new YuriException("Please specify the event end after '/to'.");
-        Task t = new Event(desc, from, to);
+        if (fromStr.isEmpty()) throw new YuriException("Please specify the event start after '/from'.");
+        if (toStr.isEmpty()) throw new YuriException("Please specify the event end after '/to'.");
+
+        // validate dates (yyyy-MM-dd) and ordering
+        LocalDate from = parseIsoDateOrThrow(fromStr, "Event start date");
+        LocalDate to   = parseIsoDateOrThrow(toStr,   "Event end date");
+        if (to.isBefore(from)) {
+            throw new YuriException("Event end date must not be before start date.");
+        }
+
+        Task t = new Event(desc, from.toString(), to.toString());
         tasks.add(t);
         persist();
         return "Got it. I've added this task:\n   " + t
@@ -183,7 +191,6 @@ public class Yuri {
         }
         return shown == 0 ? "No tasks match: " + keyword : sb.toString().stripTrailing();
     }
-
 
     /** Constructs the app, loading tasks from storage if available. */
     public Yuri() {
@@ -238,6 +245,17 @@ public class Yuri {
         assert i >= -1 : "index sanity check (unexpected negative bug)";
         if (i < 0 || i >= tasks.size()) {
             throw new YuriException("That task number doesn't exist yet. Try 'list' to see valid numbers.");
+        }
+    }
+
+    private LocalDate parseIsoDateOrThrow(String text, String fieldName) throws YuriException {
+        if (text == null || text.isBlank()) {
+            throw new YuriException(fieldName + " is missing. Use yyyy-MM-dd (e.g., 2025-09-11).");
+        }
+        try {
+            return LocalDate.parse(text.trim()); // expects yyyy-MM-dd
+        } catch (DateTimeParseException ex) {
+            throw new YuriException(fieldName + " must be in yyyy-MM-dd (e.g., 2025-09-11).");
         }
     }
 
