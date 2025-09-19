@@ -2,7 +2,7 @@
 
 ![Product screenshot](Ui.png)
 
-Yuri is a lightweight tasks chatbot with a clean JavaFX UI. It supports **todos**, **deadlines**, and **events**, plus **list**, **find**, **mark/unmark**, and **delete**. Data is saved automatically to `data/duke.txt` (created on first run).
+Yuri is a light weight tasks chatbot with a clean JavaFX UI. It supports **todos**, **deadlines**, and **events**, plus **list**, **find**, **mark/unmark**, and **delete**. Data is saved automatically to `data/duke.txt` (created on first run).
 
 ---
 
